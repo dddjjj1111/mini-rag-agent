@@ -19,7 +19,7 @@ def test_empty_search_marked():
     clear_traces()
     rag = SimpleRAG("docs")
     reg = build_tool_registry(rag)
-    out = run_tool(reg, "search_docs", {"query": "完全不存在的火星文档xyz999"})
+    out = run_tool(reg, "search_docs", {"query": "zzzxxyyqwerty999"})
     assert "未检索到" in out
     t = get_last_traces()[0]
     assert t.error_kind == "empty_result"
