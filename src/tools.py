@@ -68,10 +68,34 @@ def get_time() -> str:
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
+def _shorten_query(query: str) -> str:
+    """空结果时去掉疑问尾巴，保留前半关键词。"""
+    q = query.strip()
+    for suf in ("怎么办？", "怎么办", "是什么？", "是什么", "如何", "怎么", "？", "?"):
+        if q.endswith(suf):
+            q = q[: -len(suf)].strip()
+            break
+    # 中文取前 4 字，英文取前两个词
+    import re
+    hans = re.findall(r"[\u4e00-\u9fff]", q)
+    if len(hans) >= 2:
+        return "".join(hans[:4])
+    words = re.findall(r"[a-zA-Z0-9_]+", q)
+    return " ".join(words[:2]) if words else q
+
+
 def make_search_docs(rag: SimpleRAG) -> Callable[..., str]:
     def search_docs(query: str) -> str:
         chunks = rag.search(query, top_k=3)
-        return rag.format_context(chunks)
+        if chunks:
+            return rag.format_context(chunks)
+        short = _shorten_query(query)
+        if short and short != query:
+            chunks = rag.search(short, top_k=3)
+            if chunks:
+                body = rag.format_context(chunks)
+                return f"（原查询无命中，已用缩短查询「{short}」重试）\n{body}"
+        return rag.format_context([])
 
     return search_docs
 

@@ -7,6 +7,7 @@ A small Python demo of **keyword RAG** plus an **agent loop** (decide → call t
 - Search Markdown files under `docs/`
 - Agent loop with tools (`search_docs`, simple calculator, …)
 - Optional mock LLM via `USE_MOCK_LLM=1` (no API key needed)
+- Tool traces + `list_docs`; search uses `min_score` and a shorten-and-retry fallback
 - pytest coverage for the main paths
 
 ## Setup (Mac / Linux)

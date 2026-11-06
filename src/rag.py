@@ -43,7 +43,7 @@ class SimpleRAG:
                 if len(block) >= 20:
                     self.chunks.append(Chunk(source=path.name, text=block))
 
-    def search(self, query: str, top_k: int = 3) -> list[Chunk]:
+    def search(self, query: str, top_k: int = 3, min_score: float = 0.15) -> list[Chunk]:
         if not self.chunks:
             return []
         q = _tokenize(query)
@@ -54,7 +54,9 @@ class SimpleRAG:
             t = _tokenize(ch.text)
             overlap = len(q & t)
             if overlap:
-                scored.append((overlap / len(q), ch))
+                score = overlap / len(q)
+                if score >= min_score:
+                    scored.append((score, ch))
         scored.sort(key=lambda x: x[0], reverse=True)
         return [c for _, c in scored[:top_k]]
 
