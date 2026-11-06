@@ -85,16 +85,18 @@ def _shorten_query(query: str) -> str:
 
 
 def make_search_docs(rag: SimpleRAG) -> Callable[..., str]:
-    def search_docs(query: str) -> str:
-        chunks = rag.search(query, top_k=3)
+    def search_docs(query: str, mode: str = "keyword") -> str:
+        """mode: keyword | vector（词袋余弦，非神经网络 embedding）"""
+        search_fn = rag.search_vector if mode == "vector" else rag.search
+        chunks = search_fn(query, top_k=3)
         if chunks:
             return rag.format_context(chunks)
         short = _shorten_query(query)
         if short and short != query:
-            chunks = rag.search(short, top_k=3)
+            chunks = search_fn(short, top_k=3)
             if chunks:
                 body = rag.format_context(chunks)
-                return f"（原查询无命中，已用缩短查询「{short}」重试）\n{body}"
+                return f"（原查询无命中，已用缩短查询「{short}」重试，mode={mode}）\n{body}"
         return rag.format_context([])
 
     return search_docs

@@ -60,6 +60,46 @@ class SimpleRAG:
         scored.sort(key=lambda x: x[0], reverse=True)
         return [c for _, c in scored[:top_k]]
 
+
+
+    def _tf(self, tokens: set[str], text_tokens: set[str]) -> dict[str, float]:
+        # 词袋 TF：出现为 1，未出现为 0（极简，便于讲解）
+        return {t: (1.0 if t in text_tokens else 0.0) for t in tokens}
+
+    def _cosine(self, a: dict[str, float], b: dict[str, float]) -> float:
+        keys = set(a) | set(b)
+        if not keys:
+            return 0.0
+        dot = sum(a.get(k, 0.0) * b.get(k, 0.0) for k in keys)
+        na = sum(v * v for v in a.values()) ** 0.5
+        nb = sum(v * v for v in b.values()) ** 0.5
+        if na == 0 or nb == 0:
+            return 0.0
+        return dot / (na * nb)
+
+    def search_vector(self, query: str, top_k: int = 3, min_score: float = 0.05) -> list[Chunk]:
+        """词袋 + 余弦相似度（教学用，不是 embedding 模型）。"""
+        if not self.chunks:
+            return []
+        q_tok = _tokenize(query)
+        if not q_tok:
+            return []
+        # 词表 = 查询词 ∪ 各 chunk 词（限制规模）
+        vocab: set[str] = set(q_tok)
+        chunk_toks: list[set[str]] = []
+        for ch in self.chunks:
+            t = _tokenize(ch.text)
+            chunk_toks.append(t)
+            vocab |= t
+        q_vec = self._tf(vocab, q_tok)
+        scored: list[tuple[float, Chunk]] = []
+        for ch, t in zip(self.chunks, chunk_toks):
+            score = self._cosine(q_vec, self._tf(vocab, t))
+            if score >= min_score:
+                scored.append((score, ch))
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [c for _, c in scored[:top_k]]
+
     def format_context(self, chunks: list[Chunk]) -> str:
         if not chunks:
             return "（未检索到相关文档）"

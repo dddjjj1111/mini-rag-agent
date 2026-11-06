@@ -14,7 +14,7 @@ SYSTEM_PROMPT = """你是一个会使用工具的助手。
 若需要工具，只输出一行 JSON，格式严格为：
 {"tool": "工具名", "args": {..}}
 可用工具：
-- search_docs: args={"query": "问题"}  检索本地文档
+- search_docs: args={"query": "问题", "mode": "keyword|vector"}  检索本地文档（默认 keyword）
 - list_docs: args={}  列出 docs 下文档名（检索为空时可先看有哪些文档）
 - calculator: args={"expression": "1+2*3"}  四则运算
 - get_time: args={}  当前时间
