@@ -7,7 +7,7 @@ import re
 from typing import Any
 
 from .llm import get_llm
-from .tools import build_tool_registry, run_tool
+from .tools import build_tool_registry, clear_traces, run_tool
 from .rag import SimpleRAG
 
 SYSTEM_PROMPT = """你是一个会使用工具的助手。
@@ -15,6 +15,7 @@ SYSTEM_PROMPT = """你是一个会使用工具的助手。
 {"tool": "工具名", "args": {..}}
 可用工具：
 - search_docs: args={"query": "问题"}  检索本地文档
+- list_docs: args={}  列出 docs 下文档名（检索为空时可先看有哪些文档）
 - calculator: args={"expression": "1+2*3"}  四则运算
 - get_time: args={}  当前时间
 
@@ -49,6 +50,7 @@ def _extract_tool_call(text: str) -> dict[str, Any] | None:
 
 
 def run_agent(user_query: str, docs_dir: str = "docs", max_steps: int = 4) -> str:
+    clear_traces()
     llm = get_llm()
     rag = SimpleRAG(docs_dir)
     tools = build_tool_registry(rag)
